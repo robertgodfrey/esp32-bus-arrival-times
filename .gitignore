@@ -1,3 +1,6 @@
 .pio
-.env
+.idea
 *.iml
+src/secrets.h
+src/config.h
+

@@ -1,5 +1,6 @@
 #pragma once
 
+constexpr auto WIFI_SSID = "your-ssid";
 constexpr auto STOP_ID = "1_123456";
 
 // How often to poll the OBA API

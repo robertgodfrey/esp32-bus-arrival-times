@@ -6,8 +6,9 @@
 #include "secrets.h"
 #include "config.h"
 
-const String OBA_ARRIVALS_API_URL = "https://api.pugetsound.onebusaway.org/api/where/";
-const String OBA_ARRIVALS_FOR_STOP_URL = OBA_ARRIVALS_API_URL + STOP_ID + ".json?key=" + OBA_API_KEY + "&minutesBefore=" + MINUTES_BEFORE;
+const String OBA_ARRIVALS_API_URL = "https://api.pugetsound.onebusaway.org/api/where/arrivals-and-departures-for-stop/";
+const String OBA_ARRIVALS_FOR_STOP_URL = OBA_ARRIVALS_API_URL + STOP_ID + ".json";
+const String URL_PARAMS = String("?key=") + OBA_API_KEY + "&minutesBefore=" + MINUTES_BEFORE + "&minutesAfter=" + MINUTES_AFTER;
 
 static unsigned long lastPoll = 0;
 
@@ -31,8 +32,6 @@ static void onWiFiEvent(const WiFiEvent_t e, const WiFiEventInfo_t &info) {
 }
 
 static void fetchArrivals() {
-    Serial.printf("rssi=%d free_heap=%u\n", WiFi.RSSI(), ESP.getFreeHeap());
-
     WiFiClientSecure client;
     client.setInsecure();
     client.setTimeout(8000);
@@ -41,14 +40,15 @@ static void fetchArrivals() {
     http.setConnectTimeout(8000);
     http.setTimeout(8000);
 
-    if (!http.begin(client, OBA_ARRIVALS_FOR_STOP_URL)) {
+    if (!http.begin(client, OBA_ARRIVALS_FOR_STOP_URL + URL_PARAMS)) {
         Serial.println("http begin failed");
         return;
     }
 
-    Serial.println("connecting...");
+    Serial.println("fetching arrivals...");
+    const unsigned long start = millis();
     const int code = http.GET();
-    Serial.println("GET returned");
+    Serial.printf("fetch done in %lums, code=%d\n", millis() - start, code);
     if (code != HTTP_CODE_OK) {
         Serial.printf("GET failed, code=%d (%s)\n", code, HTTPClient::errorToString(code).c_str());
         http.end();
@@ -87,6 +87,13 @@ void setup() {
 
     delay(1000);
     Serial.println("\n============ STARTUP ============");
+    Serial.printf("ssid=%s\n", WIFI_SSID);
+    Serial.printf("stop id=%s\n", STOP_ID);
+    Serial.printf("poll interval=%d ms\n", POLL_INTERVAL_MS);
+    Serial.printf("minutes before=%d\n", MINUTES_BEFORE);
+    Serial.printf("minutes after=%d\n", MINUTES_AFTER);
+    Serial.printf("arrivals url: %s\n", OBA_ARRIVALS_FOR_STOP_URL.c_str());
+    Serial.printf("=================================\n\n");
 
     WiFiClass::mode(WIFI_STA);
     WiFiClass::setHostname("ESP32 Bus Time Display");
@@ -96,7 +103,9 @@ void setup() {
 }
 
 void loop() {
+    delay(5000);
     if (WiFiClass::status() == WL_CONNECTED && (lastPoll == 0 || millis() - lastPoll >= POLL_INTERVAL_MS)) {
+        Serial.printf("rssi=%d free_heap=%u\n", WiFi.RSSI(), ESP.getFreeHeap());
         lastPoll = millis();
         fetchArrivals();
     }

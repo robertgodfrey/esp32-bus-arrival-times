@@ -3,6 +3,7 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <esp32_smartdisplay.h>
 #include "secrets.h"
 #include "config.h"
 
@@ -11,6 +12,7 @@ const String OBA_ARRIVALS_FOR_STOP_URL = OBA_ARRIVALS_API_URL + STOP_ID + ".json
 const String URL_PARAMS = String("?key=") + OBA_API_KEY + "&minutesBefore=" + MINUTES_BEFORE + "&minutesAfter=" + MINUTES_AFTER;
 
 static unsigned long lastPoll = 0;
+static lv_obj_t *arrivalsLabel;
 
 static void onWiFiEvent(const WiFiEvent_t e, const WiFiEventInfo_t &info) {
     switch (e) {
@@ -68,6 +70,7 @@ static void fetchArrivals() {
     const JsonArray arrivals = doc["data"]["entry"]["arrivalsAndDepartures"];
 
     Serial.printf("-- %d arrivals --\n", arrivals.size());
+    String display;
     for (JsonObject a: arrivals) {
         const char *route = a["routeShortName"];
         const char *headsign = a["tripHeadsign"];
@@ -79,7 +82,10 @@ static void fetchArrivals() {
         Serial.printf("route %s to %s: %lld min%s\n",
                       route, headsign, minutesAway,
                       predicted > 0 ? "" : " (scheduled)");
+
+        display += String(route) + " to " + headsign + ": " + minutesAway + " min\n";
     }
+    lv_label_set_text(arrivalsLabel, display.c_str());
 }
 
 void setup() {
@@ -95,6 +101,12 @@ void setup() {
     Serial.printf("arrivals url: %s\n", OBA_ARRIVALS_FOR_STOP_URL.c_str());
     Serial.printf("=================================\n\n");
 
+    smartdisplay_init();
+    arrivalsLabel = lv_label_create(lv_screen_active());
+    lv_obj_set_width(arrivalsLabel, lv_pct(100));
+    lv_label_set_long_mode(arrivalsLabel, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(arrivalsLabel, "connecting...");
+
     WiFiClass::mode(WIFI_STA);
     WiFiClass::setHostname("ESP32 Bus Time Display");
     WiFi.setSleep(false);
@@ -103,10 +115,17 @@ void setup() {
 }
 
 void loop() {
-    delay(5000);
-    if (WiFiClass::status() == WL_CONNECTED && (lastPoll == 0 || millis() - lastPoll >= POLL_INTERVAL_MS)) {
+    static unsigned long lastTick = millis();
+    const unsigned long now = millis();
+    lv_tick_inc(now - lastTick);
+    lastTick = now;
+    lv_timer_handler();
+
+    if (WiFiClass::status() == WL_CONNECTED && (lastPoll == 0 || now - lastPoll >= POLL_INTERVAL_MS)) {
         Serial.printf("rssi=%d free_heap=%u\n", WiFi.RSSI(), ESP.getFreeHeap());
-        lastPoll = millis();
+        lastPoll = now;
         fetchArrivals();
     }
+
+    delay(5);
 }

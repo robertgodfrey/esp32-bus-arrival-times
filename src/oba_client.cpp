@@ -51,6 +51,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
 
     LOGF("-- %d arrivals --", jsonArrivals.size());
     arrivals.clear();
+
     for (JsonObject a: jsonArrivals) {
         const char *routeShortName = a["routeShortName"];
         const char *headsign = a["tripHeadsign"];

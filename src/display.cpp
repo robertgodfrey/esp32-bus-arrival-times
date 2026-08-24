@@ -1,8 +1,10 @@
 #include <esp32_smartdisplay.h>
 #include "display.h"
+#include "clock.h"
 
 static lv_obj_t *arrivalsLabel;
 static lv_obj_t *statusLabel;
+static lv_obj_t *clockLabel;
 static unsigned long lastSuccessMs = 0; // 0 = never succeeded yet
 static bool lastFetchFailed = false;
 
@@ -25,10 +27,18 @@ static void updateStatusLabel() {
     lv_label_set_text(statusLabel, status);
 }
 
+static void updateClockLabel() {
+    char clockText[16];
+    if (formatCurrentTime(clockText, sizeof(clockText))) {
+        lv_label_set_text(clockLabel, clockText);
+    }
+}
+
 // recomputes "minutes away" for each stored arrival based on how much time has passed since the last successful fetch,
 // so the countdown keeps ticking even if subsequent fetches fail
 static void renderArrivals() {
     if (lastArrivals.empty()) {
+        lv_label_set_text(arrivalsLabel, "No arrivals");
         return;
     }
 
@@ -44,6 +54,14 @@ static void renderArrivals() {
 
 void displayInit() {
     smartdisplay_init();
+
+    clockLabel = lv_label_create(lv_screen_active());
+    lv_obj_set_width(clockLabel, lv_pct(100));
+    lv_obj_set_style_text_font(clockLabel, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_align(clockLabel, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(clockLabel, LV_ALIGN_TOP_MID, 0, 24); // 24px padding from the top edge
+    lv_label_set_text(clockLabel, "00:00");
+
     arrivalsLabel = lv_label_create(lv_screen_active());
     lv_obj_set_width(arrivalsLabel, lv_pct(100));
     lv_label_set_long_mode(arrivalsLabel, LV_LABEL_LONG_WRAP);
@@ -75,6 +93,7 @@ void displayLoop() {
     if (now - lastStatusUpdate >= 1000) {
         lastStatusUpdate = now;
         updateStatusLabel();
+        updateClockLabel();
         renderArrivals();
     }
 }

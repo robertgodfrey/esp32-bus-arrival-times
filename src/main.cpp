@@ -6,6 +6,7 @@
 #include "wifi_setup.h"
 #include "oba_client.h"
 #include "display.h"
+#include "clock.h"
 
 static unsigned long lastPoll = 0;
 
@@ -24,6 +25,7 @@ void setup() {
 
     displayInit();
     wifiSetup();
+    clockSetup();
 }
 
 void loop() {

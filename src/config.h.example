@@ -1,7 +1,10 @@
 #pragma once
 
 constexpr auto WIFI_SSID = "your-ssid";
+constexpr auto WIFI_PASS = "your-wifi-password";
+constexpr auto OBA_API_KEY = "your-oba-api-key";
 constexpr auto STOP_ID = "1_123456";
+constexpr auto ROUTE_ID = "1_123456";
 
 // How often to poll the OBA API
 constexpr int POLL_INTERVAL_MS = 60 * 1000;

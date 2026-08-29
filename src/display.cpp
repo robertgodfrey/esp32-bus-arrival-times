@@ -1,4 +1,9 @@
+#ifdef NATIVE_SIMULATOR
+#include "lvgl.h"
+#include "drivers/sdl/lv_sdl_window.h"
+#else
 #include <esp32_smartdisplay.h>
+#endif
 #include "display.h"
 #include "clock.h"
 
@@ -61,7 +66,13 @@ static void renderArrivals() {
 }
 
 void displayInit() {
+#ifdef NATIVE_SIMULATOR
+    lv_init();
+    lv_display_t *disp = lv_sdl_window_create(240, 320);
+    lv_sdl_window_set_title(disp, "bus-display simulator");
+#else
     smartdisplay_init();
+#endif
 
     clockLabel = lv_label_create(lv_screen_active());
     lv_obj_set_width(clockLabel, lv_pct(100));

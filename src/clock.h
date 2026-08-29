@@ -8,3 +8,7 @@ void clockSetup();
 // fills buf with the current local time (e.g. "3:47").
 // returns false if time hasn't synced yet (buf left untouched in that case)
 bool formatCurrentTime(char *timeCharBuff, size_t bufSize);
+
+// fills buff with the current date (e.g. "Mon, Aug 24").
+// returns false if time hasn't synced yet (buf left untouched in that case)
+bool formatDate(char *dateCharBuff, size_t bufSize);

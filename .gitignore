@@ -1,6 +1,5 @@
 .pio
 .idea
 *.iml
-src/secrets.h
 src/config.h
 

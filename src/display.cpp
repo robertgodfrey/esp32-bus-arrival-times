@@ -2,9 +2,10 @@
 #include "display.h"
 #include "clock.h"
 
+static lv_obj_t *clockLabel;
+static lv_obj_t *dateLabel;
 static lv_obj_t *arrivalsLabel;
 static lv_obj_t *statusLabel;
-static lv_obj_t *clockLabel;
 static unsigned long lastSuccessMs = 0; // 0 = never succeeded yet
 static bool lastFetchFailed = false;
 
@@ -31,6 +32,13 @@ static void updateClockLabel() {
     char clockText[16];
     if (formatCurrentTime(clockText, sizeof(clockText))) {
         lv_label_set_text(clockLabel, clockText);
+    }
+}
+
+static void updateDateLabel() {
+    char dateText[16];
+    if (formatDate(dateText, sizeof(dateText))) {
+        lv_label_set_text(dateLabel, dateText);
     }
 }
 
@@ -61,6 +69,13 @@ void displayInit() {
     lv_obj_set_style_text_align(clockLabel, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(clockLabel, LV_ALIGN_TOP_MID, 0, 24); // 24px padding from the top edge
     lv_label_set_text(clockLabel, "00:00");
+
+    dateLabel = lv_label_create(lv_screen_active());
+    lv_obj_set_width(dateLabel, lv_pct(100));
+    lv_obj_set_style_text_font(dateLabel, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_align(dateLabel, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align_to(dateLabel, clockLabel, LV_ALIGN_OUT_BOTTOM_MID, 0, 4); // directly under the clock
+    lv_label_set_text(dateLabel, "Mon, Jan 1");
 
     arrivalsLabel = lv_label_create(lv_screen_active());
     lv_obj_set_width(arrivalsLabel, lv_pct(100));
@@ -94,6 +109,7 @@ void displayLoop() {
         lastStatusUpdate = now;
         updateStatusLabel();
         updateClockLabel();
+        updateDateLabel();
         renderArrivals();
     }
 }

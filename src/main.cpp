@@ -5,21 +5,23 @@
 #include "log.h"
 #include "wifi_setup.h"
 #include "oba_client.h"
+#include "weather_client.h"
 #include "display.h"
 #include "clock.h"
 
-static unsigned long lastPoll = 0;
+static unsigned long lastArrivalsPoll = 0;
 static TaskHandle_t fetchTaskHandle = nullptr;
 static std::vector<Arrival> fetchedArrivals;
 static int64_t fetchedCurrentTimeMs = 0;
 static bool fetchSucceeded = false;
 static volatile bool fetchComplete = false;
 
-/**
- * fetchArrivals() blocks for as long as the network does, so it runs on its own task instead of the main loop to keep
- * the clock/display updating the whole time. This function writes the results, then sets fetchComplete=true. loop()
- * only reads the other fields after observing fetchComplete==true.
- */
+static unsigned long lastWeatherPoll = 0;
+static TaskHandle_t weatherTaskHandle = nullptr;
+static Weather fetchedWeather;
+static bool weatherFetchSucceeded = false;
+static volatile bool weatherFetchComplete = false;
+
 static void fetchArrivalsTask(void *) {
     std::vector<Arrival> arrivals;
     int64_t currentTimeMs;
@@ -34,6 +36,18 @@ static void fetchArrivalsTask(void *) {
     vTaskDelete(nullptr);
 }
 
+static void fetchWeatherTask(void *) {
+    Weather weather{};
+    const bool ok = fetchWeather(weather);
+
+    fetchedWeather = weather;
+    weatherFetchSucceeded = ok;
+    weatherFetchComplete = true;
+
+    weatherTaskHandle = nullptr;
+    vTaskDelete(nullptr);
+}
+
 void setup() {
     Serial.begin(115200);
 
@@ -45,6 +59,8 @@ void setup() {
     Serial.printf("minutes before=%d\n", MINUTES_BEFORE);
     Serial.printf("minutes after=%d\n", MINUTES_AFTER);
     Serial.printf("arrivals url=%s\n", obaArrivalsUrlForLogging().c_str());
+    Serial.printf("weather poll interval=%d ms\n", WEATHER_POLL_INTERVAL_MS);
+    Serial.printf("weather url=%s\n", weatherUrlForLogging().c_str());
     Serial.printf("=================================\n\n");
 
     displayInit();
@@ -54,7 +70,8 @@ void setup() {
 
 void loop() {
     const unsigned long now = millis();
-    const bool shouldPoll = lastPoll == 0 || now - lastPoll >= POLL_INTERVAL_MS;
+    const bool shouldPollArrivals = lastArrivalsPoll == 0 || now - lastArrivalsPoll >= POLL_INTERVAL_MS;
+    const bool shouldPollWeather = lastWeatherPoll == 0 || now - lastWeatherPoll >= WEATHER_POLL_INTERVAL_MS;
 
     displayLoop();
 
@@ -67,10 +84,23 @@ void loop() {
         }
     }
 
-    if (WiFiClass::status() == WL_CONNECTED && fetchTaskHandle == nullptr && shouldPoll) {
+    if (weatherFetchComplete) {
+        weatherFetchComplete = false;
+        if (weatherFetchSucceeded) {
+            showWeather(fetchedWeather);
+        }
+    }
+
+    // fetchTaskHandle/weatherTaskHandle are both checked here so the two TLS fetches never run concurrently (too much memory)
+    if (WiFiClass::status() == WL_CONNECTED && fetchTaskHandle == nullptr && weatherTaskHandle == nullptr && shouldPollArrivals) {
         LOGF("rssi=%d free_heap=%u", WiFi.RSSI(), ESP.getFreeHeap());
-        lastPoll = now;
+        lastArrivalsPoll = now;
         xTaskCreate(fetchArrivalsTask, "fetchArrivalsTask", 8192, nullptr, 1, &fetchTaskHandle);
+    }
+
+    if (WiFiClass::status() == WL_CONNECTED && fetchTaskHandle == nullptr && weatherTaskHandle == nullptr && shouldPollWeather) {
+        lastWeatherPoll = now;
+        xTaskCreate(fetchWeatherTask, "fetchWeatherTask", 8192, nullptr, 1, &weatherTaskHandle);
     }
 
     delay(5);

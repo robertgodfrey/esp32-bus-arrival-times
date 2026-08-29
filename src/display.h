@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <vector>
 #include "oba_client.h"
+#include "weather_client.h"
 
 void displayInit();
 
@@ -14,3 +15,5 @@ void displayLoop();
 // anchor so displayLoop() can keep computing accurate countdowns afterward
 void showArrivals(const std::vector<Arrival> &arrivals, int64_t currentTimeMs);
 void recordFetchFailed();
+
+void showWeather(const Weather &weather);

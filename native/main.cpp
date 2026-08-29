@@ -4,6 +4,7 @@
 #include "display.h"
 #include "clock.h"
 #include "oba_client.h"
+#include "weather_client.h"
 
 int main() {
     displayInit();
@@ -16,6 +17,11 @@ int main() {
     int64_t currentTimeMs;
     if (fetchArrivals(arrivals, currentTimeMs)) {
         showArrivals(arrivals, currentTimeMs);
+    }
+
+    Weather weather;
+    if (fetchWeather(weather)) {
+        showWeather(weather);
     }
 
     while (true) {

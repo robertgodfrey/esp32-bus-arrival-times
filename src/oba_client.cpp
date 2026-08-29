@@ -21,6 +21,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
     HTTPClient http;
     http.setConnectTimeout(8000);
     http.setTimeout(8000);
+    http.useHTTP10(true);
 
     if (!http.begin(client, OBA_ARRIVALS_FOR_STOP_URL + URL_PARAMS)) {
         LOGF("http begin failed");
@@ -37,8 +38,19 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
         return false;
     }
 
+    // the OBA response includes a large "references" section that nothing here reads. filtering it out keeps the parsed
+    // DOM to just the handful of fields actually used
+    JsonDocument filter;
+    filter["currentTime"] = true;
+    JsonObject filterArrival = filter["data"]["entry"]["arrivalsAndDepartures"][0].to<JsonObject>();
+    filterArrival["routeShortName"] = true;
+    filterArrival["tripHeadsign"] = true;
+    filterArrival["routeId"] = true;
+    filterArrival["predictedArrivalTime"] = true;
+    filterArrival["scheduledArrivalTime"] = true;
+
     JsonDocument doc;
-    const DeserializationError err = deserializeJson(doc, http.getStream());
+    const DeserializationError err = deserializeJson(doc, http.getStream(), DeserializationOption::Filter(filter));
     http.end();
 
     if (err) {

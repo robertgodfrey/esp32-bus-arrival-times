@@ -9,10 +9,14 @@
 
 static lv_obj_t *clockLabel;
 static lv_obj_t *dateLabel;
+static lv_obj_t *weatherLabel;
 static lv_obj_t *arrivalsLabel;
 static lv_obj_t *statusLabel;
 static unsigned long lastSuccessMs = 0; // 0 = never succeeded yet
 static bool lastFetchFailed = false;
+
+static bool hasWeather = false;
+static Weather lastWeather;
 
 static std::vector<Arrival> lastArrivals;
 static int64_t lastCurrentTimeMs = 0; // API's server time, at the moment of the last successful fetch
@@ -45,6 +49,33 @@ static void updateDateLabel() {
     if (formatDate(dateText, sizeof(dateText))) {
         lv_label_set_text(dateLabel, dateText);
     }
+}
+
+// todo swap for real pixel icons
+static const char *conditionLabel(const WeatherCondition condition) {
+    switch (condition) {
+        case WeatherCondition::Clear: return "CLEAR";
+        case WeatherCondition::MainlyClear: return "MAINLY CLEAR";
+        case WeatherCondition::PartlyCloudy: return "PARTLY CLOUDY";
+        case WeatherCondition::Overcast: return "OVERCAST";
+        case WeatherCondition::Fog: return "FOG";
+        case WeatherCondition::Drizzle: return "DRIZZLE";
+        case WeatherCondition::Rain: return "RAIN";
+        case WeatherCondition::RainShowers: return "SHOWERS";
+        case WeatherCondition::Snow: return "SNOW";
+        case WeatherCondition::Thunderstorm: return "THUNDERSTORM";
+    }
+    return "?";
+}
+
+static void updateWeatherLabel() {
+    if (!hasWeather) {
+        return;
+    }
+    char weatherText[32];
+    snprintf(weatherText, sizeof(weatherText), "%s %.0fF  H%.0f L%.0f",
+             conditionLabel(lastWeather.condition), lastWeather.currentTempF, lastWeather.highTempF, lastWeather.lowTempF);
+    lv_label_set_text(weatherLabel, weatherText);
 }
 
 // recomputes "minutes away" for each stored arrival based on how much time has passed since the last successful fetch,
@@ -88,6 +119,13 @@ void displayInit() {
     lv_obj_align_to(dateLabel, clockLabel, LV_ALIGN_OUT_BOTTOM_MID, 0, 4); // directly under the clock
     lv_label_set_text(dateLabel, "Mon, Jan 1");
 
+    weatherLabel = lv_label_create(lv_screen_active());
+    lv_obj_set_width(weatherLabel, lv_pct(100));
+    lv_obj_set_style_text_font(weatherLabel, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_align(weatherLabel, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align_to(weatherLabel, dateLabel, LV_ALIGN_OUT_BOTTOM_MID, 0, 6); // directly under the date
+    lv_label_set_text(weatherLabel, "");
+
     arrivalsLabel = lv_label_create(lv_screen_active());
     lv_obj_set_width(arrivalsLabel, lv_pct(100));
     lv_label_set_long_mode(arrivalsLabel, LV_LABEL_LONG_WRAP);
@@ -121,6 +159,7 @@ void displayLoop() {
         updateStatusLabel();
         updateClockLabel();
         updateDateLabel();
+        updateWeatherLabel();
         renderArrivals();
     }
 }
@@ -137,4 +176,10 @@ void showArrivals(const std::vector<Arrival> &arrivals, const int64_t currentTim
 
 void recordFetchFailed() {
     lastFetchFailed = true;
+}
+
+void showWeather(const Weather &weather) {
+    lastWeather = weather;
+    hasWeather = true;
+    updateWeatherLabel();
 }

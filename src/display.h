@@ -13,4 +13,4 @@ void displayLoop();
 // currentTimeMs is the API's reported server time at fetch -- used as an
 // anchor so displayLoop() can keep computing accurate countdowns afterward
 void showArrivals(const std::vector<Arrival> &arrivals, int64_t currentTimeMs);
-void reportFetchFailed();
+void recordFetchFailed();

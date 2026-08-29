@@ -9,6 +9,30 @@
 #include "clock.h"
 
 static unsigned long lastPoll = 0;
+static TaskHandle_t fetchTaskHandle = nullptr;
+static std::vector<Arrival> fetchedArrivals;
+static int64_t fetchedCurrentTimeMs = 0;
+static bool fetchSucceeded = false;
+static volatile bool fetchComplete = false;
+
+/**
+ * fetchArrivals() blocks for as long as the network does, so it runs on its own task instead of the main loop to keep
+ * the clock/display updating the whole time. This function writes the results, then sets fetchComplete=true. loop()
+ * only reads the other fields after observing fetchComplete==true.
+ */
+static void fetchArrivalsTask(void *) {
+    std::vector<Arrival> arrivals;
+    int64_t currentTimeMs;
+    const bool ok = fetchArrivals(arrivals, currentTimeMs);
+
+    fetchedArrivals = std::move(arrivals);
+    fetchedCurrentTimeMs = currentTimeMs;
+    fetchSucceeded = ok;
+    fetchComplete = true;
+
+    fetchTaskHandle = nullptr;
+    vTaskDelete(nullptr);
+}
 
 void setup() {
     Serial.begin(115200);
@@ -29,21 +53,24 @@ void setup() {
 }
 
 void loop() {
+    const unsigned long now = millis();
+    const bool shouldPoll = lastPoll == 0 || now - lastPoll >= POLL_INTERVAL_MS;
+
     displayLoop();
 
-    const unsigned long now = millis();
-    if (WiFiClass::status() == WL_CONNECTED && (lastPoll == 0 || now - lastPoll >= POLL_INTERVAL_MS)) {
-        LOGF("rssi=%d free_heap=%u", WiFi.RSSI(), ESP.getFreeHeap());
-
-        lastPoll = now;
-        std::vector<Arrival> arrivals;
-        int64_t currentTimeMs;
-
-        if (fetchArrivals(arrivals, currentTimeMs)) {
-            showArrivals(arrivals, currentTimeMs);
+    if (fetchComplete) {
+        fetchComplete = false;
+        if (fetchSucceeded) {
+            showArrivals(fetchedArrivals, fetchedCurrentTimeMs);
         } else {
-            reportFetchFailed();
+            recordFetchFailed();
         }
+    }
+
+    if (WiFiClass::status() == WL_CONNECTED && fetchTaskHandle == nullptr && shouldPoll) {
+        LOGF("rssi=%d free_heap=%u", WiFi.RSSI(), ESP.getFreeHeap());
+        lastPoll = now;
+        xTaskCreate(fetchArrivalsTask, "fetchArrivalsTask", 8192, nullptr, 1, &fetchTaskHandle);
     }
 
     delay(5);

@@ -114,7 +114,7 @@ void displayLoop() {
     }
 }
 
-void showArrivals(const std::vector<Arrival> &arrivals, int64_t currentTimeMs) {
+void showArrivals(const std::vector<Arrival> &arrivals, const int64_t currentTimeMs) {
     lastArrivals = arrivals;
     lastCurrentTimeMs = currentTimeMs;
     lastCurrentTimeMillis = millis();
@@ -124,6 +124,6 @@ void showArrivals(const std::vector<Arrival> &arrivals, int64_t currentTimeMs) {
     lastSuccessMs = millis();
 }
 
-void reportFetchFailed() {
+void recordFetchFailed() {
     lastFetchFailed = true;
 }

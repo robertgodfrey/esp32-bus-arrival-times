@@ -26,3 +26,13 @@ bool formatDate(char *dateCharBuff, const size_t bufSize) {
     strftime(dateCharBuff, bufSize, "%a, %b %d", &dateInfo);
     return true;
 }
+
+bool getCurrentHourMinute(int &hour, int &minute) {
+    const time_t now = time(nullptr);
+    tm timeInfo{};
+    localtime_r(&now, &timeInfo);
+
+    hour = timeInfo.tm_hour;
+    minute = timeInfo.tm_min;
+    return true;
+}

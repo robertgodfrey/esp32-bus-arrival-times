@@ -8,6 +8,7 @@
 #include "weather_client.h"
 #include "display.h"
 #include "clock.h"
+#include "chime.h"
 
 static unsigned long lastArrivalsPoll = 0;
 static TaskHandle_t fetchTaskHandle = nullptr;
@@ -66,6 +67,7 @@ void setup() {
     displayInit();
     wifiSetup();
     clockSetup();
+    chimeSetup();
 }
 
 void loop() {
@@ -103,5 +105,5 @@ void loop() {
         xTaskCreate(fetchWeatherTask, "fetchWeatherTask", 8192, nullptr, 1, &weatherTaskHandle);
     }
 
-    delay(5);
+    delay(1000);
 }

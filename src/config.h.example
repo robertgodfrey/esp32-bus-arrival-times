@@ -4,6 +4,7 @@ constexpr auto WIFI_SSID = "your-ssid";
 constexpr auto WIFI_PASS = "your-wifi-password";
 constexpr auto OBA_API_KEY = "your-oba-api-key";
 constexpr auto STOP_ID = "1_123456";
+constexpr auto STOP_NAME = "your-stop-name"; // this device is fixed at one stop, so it's simplest to just name it here rather than parse it out of the API response
 constexpr auto ROUTE_ID = "1_123456";
 
 // How often to poll the OBA API
@@ -14,3 +15,21 @@ constexpr short MINUTES_BEFORE = 2;
 
 // Include vehicles arriving or departing in the next n minutes
 constexpr short MINUTES_AFTER = 20;
+
+constexpr auto LATITUDE = "47.6062";
+constexpr auto LONGITUDE = "-122.3321";
+constexpr int WEATHER_POLL_INTERVAL_MS = 15 * 60 * 1000;
+
+// Sound the chime once a trip is this many minutes away
+constexpr int CHIME_MINUTES_BEFORE = 5;
+
+// Onboard PAM8002A amp audio input (Sunton ESP32-2432S032C)
+constexpr int CHIME_GPIO = 26;
+
+// Local-time windows (minutes since midnight) the chime is allowed to sound in
+constexpr int CHIME_WINDOWS[][2] = {
+    {6 * 60 + 0, 6 * 60 + 30}, // 06:00-06:30
+};
+
+// How far predicted can drift from scheduled before it counts as "early"/"late" rather than "on time"
+constexpr int64_t ARRIVAL_STATUS_THRESHOLD_MS = 2 * 60 * 1000;

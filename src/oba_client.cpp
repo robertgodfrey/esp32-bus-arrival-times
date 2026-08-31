@@ -43,6 +43,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
     JsonDocument filter;
     filter["currentTime"] = true;
     JsonObject filterArrival = filter["data"]["entry"]["arrivalsAndDepartures"][0].to<JsonObject>();
+    filterArrival["tripId"] = true;
     filterArrival["routeShortName"] = true;
     filterArrival["tripHeadsign"] = true;
     filterArrival["routeId"] = true;
@@ -65,6 +66,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
     arrivals.clear();
 
     for (JsonObject a: jsonArrivals) {
+        const char *tripId = a["tripId"];
         const char *routeShortName = a["routeShortName"];
         const char *headsign = a["tripHeadsign"];
 
@@ -80,7 +82,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
         LOGF("route %s to %s: %lld min%s", routeShortName, headsign,
              (arrivalTime - currentTimeMs) / 60000, predicted > 0 ? "" : " (scheduled)");
 
-        arrivals.push_back({routeShortName, headsign, arrivalTime, predicted > 0});
+        arrivals.push_back({tripId, routeShortName, headsign, arrivalTime, scheduled, predicted > 0});
     }
     return true;
 }

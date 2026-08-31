@@ -7,8 +7,10 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
     currentTimeMs = static_cast<int64_t>(time(nullptr)) * 1000;
 
     arrivals = {
-        {"1 Line", "Seattle", currentTimeMs + 3 * 60000, true},
-        {"1 Line", "Seattle", currentTimeMs + 12 * 60000, false},
+        // predicted 3 min later than scheduled -- exercises the "Late" status color
+        {"trip1", "1 Line", "Seattle", currentTimeMs + 4 * 60000, currentTimeMs + 1 * 60000, true},
+        // no real-time prediction -- exercises the "Scheduled" status color
+        {"trip2", "1 Line", "Seattle", currentTimeMs + 12 * 60000, currentTimeMs + 12 * 60000, false},
     };
     return true;
 }

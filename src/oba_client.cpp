@@ -13,7 +13,7 @@ String obaArrivalsUrlForLogging() {
     return OBA_ARRIVALS_FOR_STOP_URL;
 }
 
-bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
+bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &serverTimeMs) {
     WiFiClientSecure client;
     client.setInsecure();
     client.setTimeout(8000);
@@ -59,7 +59,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
         return false;
     }
 
-    currentTimeMs = doc["currentTime"] | 0LL;
+    serverTimeMs = doc["currentTime"] | 0LL;
     const JsonArray jsonArrivals = doc["data"]["entry"]["arrivalsAndDepartures"];
 
     LOGF("-- %d arrivals --", jsonArrivals.size());
@@ -80,7 +80,7 @@ bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
         int64_t arrivalTime = predicted > 0 ? predicted : scheduled;
 
         LOGF("route %s to %s: %lld min%s", routeShortName, headsign,
-             (arrivalTime - currentTimeMs) / 60000, predicted > 0 ? "" : " (scheduled)");
+             (arrivalTime - serverTimeMs) / 60000, predicted > 0 ? "" : " (scheduled)");
 
         arrivals.push_back({tripId, routeShortName, headsign, arrivalTime, scheduled, predicted > 0});
     }

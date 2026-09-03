@@ -11,4 +11,4 @@ void chimeSetup();
 // current local time falls within one of the configured chime windows (see CHIME_WINDOWS in
 // config.h). Safe to call after every successful fetch -- each trip only ever chimes once,
 // tracked by tripId.
-void checkChimes(const std::vector<Arrival> &arrivals, int64_t currentTimeMs);
+void checkChimes(const std::vector<Arrival> &arrivals, int64_t serverTimeMs);

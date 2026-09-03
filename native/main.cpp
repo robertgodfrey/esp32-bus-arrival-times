@@ -14,9 +14,9 @@ int main() {
     // "minutes away" countdown every second on its own, so this is enough to
     // see the live countdown behavior working, same as on the real device
     std::vector<Arrival> arrivals;
-    int64_t currentTimeMs;
-    if (fetchArrivals(arrivals, currentTimeMs)) {
-        showArrivals(arrivals, currentTimeMs);
+    int64_t serverTimeMs;
+    if (fetchArrivals(arrivals, serverTimeMs)) {
+        showArrivals(arrivals, serverTimeMs);
     }
 
     Weather weather;

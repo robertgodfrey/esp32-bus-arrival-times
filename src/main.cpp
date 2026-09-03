@@ -13,7 +13,7 @@
 static unsigned long lastArrivalsPoll = 0;
 static TaskHandle_t fetchTaskHandle = nullptr;
 static std::vector<Arrival> fetchedArrivals;
-static int64_t fetchedCurrentTimeMs = 0;
+static int64_t fetchedServerTimeMs = 0;
 static bool fetchSucceeded = false;
 static volatile bool fetchComplete = false;
 
@@ -25,11 +25,11 @@ static volatile bool weatherFetchComplete = false;
 
 static void fetchArrivalsTask(void *) {
     std::vector<Arrival> arrivals;
-    int64_t currentTimeMs;
-    const bool ok = fetchArrivals(arrivals, currentTimeMs);
+    int64_t serverTimeMs;
+    const bool ok = fetchArrivals(arrivals, serverTimeMs);
 
     fetchedArrivals = std::move(arrivals);
-    fetchedCurrentTimeMs = currentTimeMs;
+    fetchedServerTimeMs = serverTimeMs;
     fetchSucceeded = ok;
     fetchComplete = true;
 
@@ -80,9 +80,7 @@ void loop() {
     if (fetchComplete) {
         fetchComplete = false;
         if (fetchSucceeded) {
-            showArrivals(fetchedArrivals, fetchedCurrentTimeMs);
-        } else {
-            recordFetchFailed();
+            showArrivals(fetchedArrivals, fetchedServerTimeMs);
         }
     }
 

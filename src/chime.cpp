@@ -56,14 +56,14 @@ void chimeSetup() {
     chimeToneSetup();
 }
 
-void checkChimes(const std::vector<Arrival> &arrivals, const int64_t currentTimeMs) {
+void checkChimes(const std::vector<Arrival> &arrivals, const int64_t serverTimeMs) {
     for (const Arrival &arrival: arrivals) {
         bool &sounded = soundedFlagFor(arrival.tripId);
         if (sounded) {
             continue;
         }
 
-        const int64_t minutesAway = (arrival.arrivalTimeMs - currentTimeMs) / 60000;
+        const int64_t minutesAway = (arrival.arrivalTimeMs - serverTimeMs) / 60000;
         if (minutesAway >= 0 && minutesAway <= CHIME_MINUTES_BEFORE && isWithinChimeWindow()) {
             playChimeTone();
             sounded = true;

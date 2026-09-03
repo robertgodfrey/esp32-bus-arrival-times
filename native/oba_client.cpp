@@ -3,14 +3,14 @@
 
 // sample data to see how the display looks without needing a real OBA response
 
-bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs) {
-    currentTimeMs = static_cast<int64_t>(time(nullptr)) * 1000;
+bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &serverTimeMs) {
+    serverTimeMs = static_cast<int64_t>(time(nullptr)) * 1000;
 
     arrivals = {
         // predicted 3 min later than scheduled -- exercises the "Late" status color
-        {"trip1", "1 Line", "Seattle", currentTimeMs + 4 * 60000, currentTimeMs + 1 * 60000, true},
+        {"trip1", "1 Line", "Seattle", serverTimeMs + 4 * 60000, serverTimeMs + 1 * 60000, true},
         // no real-time prediction -- exercises the "Scheduled" status color
-        {"trip2", "1 Line", "Seattle", currentTimeMs + 12 * 60000, currentTimeMs + 12 * 60000, false},
+        {"trip2", "1 Line", "Seattle", serverTimeMs + 12 * 60000, serverTimeMs + 12 * 60000, false},
     };
     return true;
 }

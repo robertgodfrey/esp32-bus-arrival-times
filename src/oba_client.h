@@ -24,10 +24,10 @@ enum class ArrivalStatus {
 ArrivalStatus arrivalStatus(const Arrival &arrival);
 
 // Fetches current arrivals for the configured stop/route.
-// On success, returns true, fills `arrivals`, and sets `currentTimeMs` to the
+// On success, returns true, fills `arrivals`, and sets `serverTimeMs` to the
 // API's reported server time at fetch -- callers can use it as an anchor to
 // keep computing accurate "minutes away" values as time passes.
-bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &currentTimeMs);
+bool fetchArrivals(std::vector<Arrival> &arrivals, int64_t &serverTimeMs);
 
 // The request URL, without the API key, for startup logging.
 String obaArrivalsUrlForLogging();

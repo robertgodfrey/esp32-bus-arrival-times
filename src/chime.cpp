@@ -8,33 +8,34 @@ namespace {
     struct ChimeState {
         String tripId;
         bool sounded;
+        bool hasPriorReading;
+        int64_t lastMinutesAway;
     };
 
     std::vector<ChimeState> chimeStates;
 
-    bool &soundedFlagFor(const String &tripId) {
+    ChimeState &stateFor(const String &tripId) {
         for (ChimeState &state: chimeStates) {
             if (state.tripId == tripId) {
-                return state.sounded;
+                return state;
             }
         }
-        chimeStates.push_back({tripId, false});
-        return chimeStates.back().sounded;
+        chimeStates.push_back({tripId, false, false, 0});
+        return chimeStates.back();
     }
 
-    // drops tracked trips that have fallen out of the current arrivals window (arrived and aged
-    // out, or cancelled) -- otherwise this list would grow for as long as the device stays on
+    // drops tracked trips that have fallen out of the current arrivals window
     void forgetStaleTrips(const std::vector<Arrival> &arrivals) {
         chimeStates.erase(std::remove_if(chimeStates.begin(), chimeStates.end(),
-                                          [&](const ChimeState &state) {
-                                              for (const Arrival &arrival: arrivals) {
-                                                  if (arrival.tripId == state.tripId) {
-                                                      return false;
-                                                  }
-                                              }
-                                              return true;
-                                          }),
-                           chimeStates.end());
+                                         [&](const ChimeState &state) {
+                                             for (const Arrival &arrival: arrivals) {
+                                                 if (arrival.tripId == state.tripId) {
+                                                     return false;
+                                                 }
+                                             }
+                                             return true;
+                                         }),
+                          chimeStates.end());
     }
 
     bool isWithinChimeWindow() {
@@ -42,6 +43,7 @@ namespace {
         if (!getCurrentHourMinute(hour, minute)) {
             return false; // time not synced yet -- don't chime
         }
+
         const int nowMinutes = hour * 60 + minute;
         for (const auto &window: CHIME_WINDOWS) {
             if (nowMinutes >= window[0] && nowMinutes <= window[1]) {
@@ -58,16 +60,22 @@ void chimeSetup() {
 
 void checkChimes(const std::vector<Arrival> &arrivals, const int64_t serverTimeMs) {
     for (const Arrival &arrival: arrivals) {
-        bool &sounded = soundedFlagFor(arrival.tripId);
-        if (sounded) {
-            continue;
+        ChimeState &state = stateFor(arrival.tripId);
+        const int64_t minutesAway = (arrival.arrivalTimeMs - serverTimeMs) / 60000;
+
+        const bool shouldSoundChime = !state.sounded
+                                      && state.hasPriorReading
+                                      && state.lastMinutesAway > CHIME_MINUTES_BEFORE
+                                      && minutesAway <= CHIME_MINUTES_BEFORE
+                                      && isWithinChimeWindow();
+
+        if (shouldSoundChime) {
+            playChimeTone();
+            state.sounded = true;
         }
 
-        const int64_t minutesAway = (arrival.arrivalTimeMs - serverTimeMs) / 60000;
-        if (minutesAway >= 0 && minutesAway <= CHIME_MINUTES_BEFORE && isWithinChimeWindow()) {
-            playChimeTone();
-            sounded = true;
-        }
+        state.lastMinutesAway = minutesAway;
+        state.hasPriorReading = true;
     }
     forgetStaleTrips(arrivals);
 }

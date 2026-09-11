@@ -1,4 +1,3 @@
-#include "log.h"
 #ifdef NATIVE_SIMULATOR
 #include "lvgl.h"
 #include "drivers/sdl/lv_sdl_window.h"
@@ -151,6 +150,7 @@ static lv_obj_t *addArrivalTimeCell(lv_obj_t *parent, const int64_t minutesAway,
     return cell;
 }
 
+// todo add this back
 static void updateStatusLabel() {
     char status[48];
     if (lastSuccessMs == 0) {

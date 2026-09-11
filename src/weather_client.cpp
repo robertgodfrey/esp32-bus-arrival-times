@@ -10,10 +10,6 @@ static const String WEATHER_URL =
     "&forecast_days=1&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min,weather_code" +
     "&temperature_unit=fahrenheit&timezone=auto";
 
-/*
-https://api.open-meteo.com/v1/forecast?latitude=47.6062&longitude=-122.3321&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min,weather_code&temperature_unit=fahrenheit&timezone=auto
-*/
-
 String weatherUrlForLogging() {
     return WEATHER_URL;
 }

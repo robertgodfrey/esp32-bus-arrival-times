@@ -33,7 +33,9 @@ bool formatDate(char *dateCharBuff, const size_t bufSize) {
     if (!getLocalTime(&dateInfo, 0)) {
         return false;
     }
-    strftime(dateCharBuff, bufSize, "%a, %b %d", &dateInfo);
+    char prefix[16];
+    strftime(prefix, sizeof(prefix), "%a, %b", &dateInfo);
+    snprintf(dateCharBuff, bufSize, "%s %d", prefix, dateInfo.tm_mday);
     return true;
 }
 

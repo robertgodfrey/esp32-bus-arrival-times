@@ -211,6 +211,7 @@ void displayInit() {
     lv_sdl_window_set_title(disp, "bus-display simulator");
 #else
     smartdisplay_init();
+    smartdisplay_lcd_set_brightness_cb(smartdisplay_lcd_adaptive_brightness_cds, 500);
 #endif
 
     // -- time/date group --

@@ -19,12 +19,22 @@ LV_FONT_DECLARE(public_sans_medium_16); // route badges
 LV_FONT_DECLARE(public_sans_medium_26); // "min" (route arrivals)
 LV_FONT_DECLARE(public_sans_medium_28); // "NOW" (route arrivals)
 
-LV_FONT_DECLARE(icons_weather);
 LV_FONT_DECLARE(icon_bus);
+
+LV_IMAGE_DECLARE(icon_weather_clear);
+LV_IMAGE_DECLARE(icon_weather_mainly_clear);
+LV_IMAGE_DECLARE(icon_weather_partly_cloudy);
+LV_IMAGE_DECLARE(icon_weather_overcast);
+LV_IMAGE_DECLARE(icon_weather_fog);
+LV_IMAGE_DECLARE(icon_weather_drizzle);
+LV_IMAGE_DECLARE(icon_weather_rain);
+LV_IMAGE_DECLARE(icon_weather_rain_showers);
+LV_IMAGE_DECLARE(icon_weather_snow);
+LV_IMAGE_DECLARE(icon_weather_thunderstorm);
 
 static lv_obj_t *clockLabel;
 static lv_obj_t *dateLabel;
-static lv_obj_t *weatherIconLabel;
+static lv_obj_t *weatherIconImage;
 static lv_obj_t *currentTempLabel;
 static lv_obj_t *highLabel;
 static lv_obj_t *lowLabel;
@@ -52,21 +62,21 @@ static void updateDateLabel() {
     }
 }
 
-// erikflowers/weather-icons (SIL OFL)
-static const char *weatherIconGlyph(const WeatherCondition condition) {
+// meteocons (MIT), see scripts/meteocons_to_lvgl.py
+static const lv_image_dsc_t *weatherIcon(const WeatherCondition condition) {
     switch (condition) {
-        case WeatherCondition::Clear: return "\uF00D"; // wi-day-sunny
-        case WeatherCondition::MainlyClear: return "\uF00C"; // wi-day-sunny-overcast
-        case WeatherCondition::PartlyCloudy: return "\uF002"; // wi-day-cloudy
-        case WeatherCondition::Overcast: return "\uF013"; // wi-cloudy
-        case WeatherCondition::Fog: return "\uF014"; // wi-fog
-        case WeatherCondition::Drizzle: return "\uF01C"; // wi-sprinkle
-        case WeatherCondition::Rain: return "\uF019"; // wi-rain
-        case WeatherCondition::RainShowers: return "\uF01A"; // wi-showers
-        case WeatherCondition::Snow: return "\uF01B"; // wi-snow
-        case WeatherCondition::Thunderstorm: return "\uF01E"; // wi-thunderstorm
+        case WeatherCondition::Clear: return &icon_weather_clear; // clear-day
+        case WeatherCondition::MainlyClear: return &icon_weather_mainly_clear; // clear-day sun + small cloud
+        case WeatherCondition::PartlyCloudy: return &icon_weather_partly_cloudy; // mostly-clear-day
+        case WeatherCondition::Overcast: return &icon_weather_overcast; // overcast
+        case WeatherCondition::Fog: return &icon_weather_fog; // fog
+        case WeatherCondition::Drizzle: return &icon_weather_drizzle; // drizzle
+        case WeatherCondition::Rain: return &icon_weather_rain; // rain
+        case WeatherCondition::RainShowers: return &icon_weather_rain_showers; // partly-cloudy-day-rain
+        case WeatherCondition::Snow: return &icon_weather_snow; // snow
+        case WeatherCondition::Thunderstorm: return &icon_weather_thunderstorm; // thunderstorms-rain
     }
-    return "";
+    return nullptr;
 }
 
 static void updateWeatherLabel() {
@@ -264,9 +274,7 @@ void displayInit() {
     lv_obj_set_flex_align(currentRow, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_pad_column(currentRow, 8, 0);
 
-    weatherIconLabel = lv_label_create(currentRow);
-    lv_obj_set_style_text_font(weatherIconLabel, &icons_weather, 0);
-    lv_label_set_text(weatherIconLabel, "");
+    weatherIconImage = lv_image_create(currentRow);
 
     currentTempLabel = lv_label_create(currentRow);
     lv_obj_set_style_text_font(currentTempLabel, &inter_medium_30, 0);
@@ -364,6 +372,6 @@ void showArrivals(const std::vector<Arrival> &arrivals, const int64_t serverTime
 void showWeather(const Weather &weather) {
     lastWeather = weather;
     hasWeather = true;
-    lv_label_set_text(weatherIconLabel, weatherIconGlyph(weather.condition));
+    lv_image_set_src(weatherIconImage, weatherIcon(weather.condition));
     updateWeatherLabel();
 }
